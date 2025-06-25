@@ -1,2 +1,5 @@
+
 # font-copywriter
-Tool to automatically produce human-readable descriptions of a font family
+
+Python tool to produce human-readable descriptions of font families. 
+

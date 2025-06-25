@@ -1,0 +1,1 @@
+Noto is a global font collection for writing in all modern and ancient languages.

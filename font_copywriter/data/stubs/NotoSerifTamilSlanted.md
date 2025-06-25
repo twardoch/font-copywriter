@@ -1,0 +1,1 @@
+Noto Serif Tamil Slanted is a slanted modulated (“serif”) design for texts in the Indic _Tamil_ script.

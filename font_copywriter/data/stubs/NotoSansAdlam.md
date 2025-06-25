@@ -1,0 +1,1 @@
+Noto Sans Adlam is a joining (cursive) unmodulated (“sans serif”) design for texts in the African _Adlam_ script.

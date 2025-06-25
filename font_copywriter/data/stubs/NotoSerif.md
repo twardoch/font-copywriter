@@ -1,0 +1,1 @@
+Noto Serif is a modulated (“serif”) design for texts in the _Latin, Cyrillic_ and _Greek_ scripts, also suitable as the complementary font for other script-specific Noto Serif fonts.
