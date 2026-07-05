@@ -1,0 +1,17 @@
+# this_file: docs/_config.yml
+title: font-copywriter
+description: Generate human-readable descriptions for font families from their metadata.
+remote_theme: just-the-docs/just-the-docs
+url: https://twardoch.github.io/font-copywriter
+
+color_scheme: light
+
+aux_links:
+  "GitHub":
+    - https://github.com/twardoch/font-copywriter
+
+footer_content: "font-copywriter is released under the Apache 2.0 license."
+
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag

@@ -1,0 +1,95 @@
+# this_file: pyproject.toml
+[project]
+name = "font-copywriter"
+dynamic = ["version"]
+description = "Generate human-readable descriptions for font families."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+keywords = ["font", "typography", "metadata", "fonttools", "documentation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Text Processing :: Fonts",
+]
+
+dependencies = [
+    "fontTools>=4.40.0",
+    "fire>=0.5.0",
+]
+
+[[project.authors]]
+name = "Adam Twardoch"
+email = "adam+github@twardoch.com"
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.scripts]
+font-copywriter = "font_copywriter.__main__:cli"
+
+[project.urls]
+Documentation = "https://github.com/twardoch/font-copywriter#readme"
+Issues = "https://github.com/twardoch/font-copywriter/issues"
+Source = "https://github.com/twardoch/font-copywriter"
+
+[build-system]
+requires = ["hatchling>=1.21.0", "hatch-vcs>=0.3.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/font_copywriter/__version__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/font_copywriter"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["fontTools.*", "fire.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+extend-select = [
+    "A", "B", "C", "E", "EM", "F", "I", "ISC", "N",
+    "PLC", "PLE", "PLW", "Q", "RUF", "UP", "W",
+]
+ignore = ["E501", "ISC001", "PLR2004"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.pytest.ini_options]
+addopts = "-v --durations=10"
+testpaths = ["tests"]
+python_files = ["test_*.py"]

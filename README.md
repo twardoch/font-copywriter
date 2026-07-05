@@ -1,196 +1,81 @@
 # font-copywriter
 
-`font-copywriter` is a Python tool designed to generate human-readable descriptions for font families. It aims to simplify the process of creating informative and consistent documentation for fonts, which can be especially useful for large font collections like the Noto font family.
+Point it at a font. Get back a paragraph a human can read.
 
-## What it does
+`font-copywriter` opens a font with [fontTools](https://github.com/fonttools/fonttools), pulls the family name, styles, glyph and character counts, designer, and licence out of the `name` and `cmap` tables, and writes a Markdown description. When a matching *stub* — a hand-written blurb for that family — is on hand, it goes in at the top. The prose carries the voice; the numbers carry the proof.
 
-The primary goal of `font-copywriter` is to analyze font files (or collections of font files within a folder) and produce descriptive text that outlines their characteristics, intended use, and other relevant details. This can include information about the supported scripts, stylistic features, and any unique aspects of the font family.
+It also writes a small character specimen: the font's name over a stock pangram, trimmed to only the characters the font can actually draw.
 
-### Key Features (Planned)
+![font-copywriter](docs/assets/icon.png)
 
-*   Extraction of detailed font metadata.
-*   Integration with user-provided Markdown stubs/templates.
-*   Generation of descriptions in Markdown format.
-*   Command-line interface and Python library usage.
-*   Support for processing individual font files and entire folders.
-*   (Potentially) Generation of "art" files like text samples or glyph waterfalls.
+## Install
 
-## Who it's for
-
-This tool is beneficial for:
-
-*   **Typographers and Font Designers:** To automatically generate baseline descriptions for their creations.
-*   **Software Developers:** Who need to integrate font information into applications or websites.
-*   **Localization and Internationalization Teams:** Working with diverse font families for different languages and scripts.
-*   **Content Creators and Designers:** To help them understand and choose appropriate fonts for their projects.
-
-## Why it's useful
-
-`font-copywriter` offers several advantages:
-
-*   **Consistency:** Ensures that font descriptions are uniform and follow a standard format.
-*   **Efficiency:** Automates the often time-consuming task of writing font descriptions manually.
-*   **Accessibility:** Provides clear and understandable information about fonts, making them more accessible to a wider audience.
-*   **Documentation:** Facilitates better documentation practices for font projects.
-
-## Installation
-
-As `font-copywriter` is a Python package, you can install it using `pip`. It is recommended to install it in a virtual environment.
+Not on PyPI yet. Install from source:
 
 ```bash
-pip install font-copywriter
+pip install git+https://github.com/twardoch/font-copywriter
 ```
 
-*(Note: Once the package is published on PyPI, this command will work. For local development, you might use `pip install .` from the root of the repository.)*
-
-## How to use
-
-`font-copywriter` can be used both as a command-line tool and as a Python library.
-
-### Command-Line Interface (CLI)
-
-The tool provides a command-line interface for easy generation of font descriptions.
+## Command line
 
 ```bash
-font-copywriter <font_path_or_folder> <desc_path> <art_path> <stub_folder>
+font-copywriter <font_or_folder> <desc_path> [art_path] [stub_folder]
 ```
 
-**Arguments:**
-
-*   `font_path_or_folder`: Path to a single font file or a folder containing multiple font files.
-*   `desc_path`: Path where the generated description file(s) will be saved.
-*   `art_path`: Path related to "art" files (the exact nature of these needs further clarification based on implementation, but it could refer to sample images, character sets, or other visual representations).
-*   `stub_folder`: Path to a folder containing stub files (e.g., Markdown templates or partial descriptions) that can be used to guide or supplement the generation process. The `font_copywriter/data/stubs/` directory in this repository provides examples, primarily for Noto fonts.
-
-**Example:**
+| Argument         | Meaning                                                              |
+| ---------------- | ------------------------------------------------------------------- |
+| `font_or_folder` | One font file (`.ttf`, `.otf`, `.ttc`, `.otc`) or a folder of them. |
+| `desc_path`      | Folder for the generated `<Family>.md` descriptions.                |
+| `art_path`       | Optional. Folder for the `<Family>.txt` specimens.                  |
+| `stub_folder`    | Optional. Your own stubs. Omit to use the bundled Noto stubs.       |
 
 ```bash
-font-copywriter "path/to/your/fonts" "output/descriptions" "output/art" "path/to/stubs"
+# One font -> descriptions/NotoSans.md
+font-copywriter NotoSans-Regular.ttf descriptions/
+
+# Add a specimen in art/
+font-copywriter NotoSans-Regular.ttf descriptions/ art/
+
+# A whole folder, with your own stubs
+font-copywriter fonts/ descriptions/ art/ my-stubs/
 ```
 
-### Programmatic Usage (Python Library)
-
-You can also integrate `font-copywriter` into your Python projects by importing the `copywrite` function:
+## In Python
 
 ```python
-from pathlib import Path
-from font_copywriter import copywrite
+from font_copywriter import copywrite, read_metadata
 
-# Define the paths
-font_source = Path("path/to/your/fonts_folder_or_file")
-description_output_path = Path("output/font_descriptions")
-art_output_path = Path("output/font_art")
-stubs_directory = Path("path/to/your/stubs")
+# Just the facts
+meta = read_metadata("NotoSans-Regular.ttf")
+print(meta.family, meta.glyph_count, len(meta.characters))
 
-# Ensure output directories exist if needed by the function's implementation
-description_output_path.mkdir(parents=True, exist_ok=True)
-art_output_path.mkdir(parents=True, exist_ok=True)
-
-# Generate the description
-# Note: The exact behavior (e.g., return value, how files are saved)
-# will depend on the implementation of the copywrite function.
-copywrite(
-    font_path_or_folder=font_source,
-    desc_path=description_output_path,
-    art_path=art_output_path,
-    stub_folder=stubs_directory
-)
-
-print(f"Font descriptions generated in {description_output_path}")
+# Write descriptions (and specimens), get back the paths written
+written = copywrite("fonts/", "descriptions/", art_path="art/")
 ```
 
----
+`read_metadata` returns a frozen `FontMetadata`: family, subfamily, full name, designer, copyright, licence, glyph count, and the sorted tuple of Unicode codepoints the font maps. Missing `name` records come back as empty strings, never `None`, so you never have to guard.
 
-## Technical Details
+## Stubs
 
-This section provides a more in-depth look at how `font-copywriter` is structured and intended to operate. As the project is in its early stages, some of these details are based on the planned architecture and may evolve.
+A stub is one Markdown file per family, named after the family with spaces removed — `Noto Sans` matches `NotoSans.md`. Matching folds both sides to lowercase letters and digits, so case and punctuation don't trip it up. Keep a stub to a sentence or two of prose; the tool adds the metadata underneath. Fonts without a matching stub still get a description — they just skip the blurb.
 
-### How it Works (Intended Architecture)
+The package ships stubs for the Noto families under `src/font_copywriter/data/stubs/`. See that folder's `README.md` for the format.
 
-The core logic resides in the `copywrite` function within `font_copywriter/copywriter.py`. The intended process is as follows:
+## How it works
 
-1.  **Font Analysis:** The tool will inspect the font file(s) provided in `font_path_or_folder`. This likely involves using font-parsing libraries (e.g., `fontTools`) to extract metadata such as:
-    *   Family name, style, weight, width
-    *   Supported Unicode ranges and scripts
-    *   Glyph counts
-    *   OpenType features
-    *   Copyright and licensing information
+1. **Read** — fontTools opens each font; the `name` table gives family, styles, designer, and licence, the `cmap` gives the character set.
+2. **Match** — the family name is folded and matched against the stub filenames. A hit supplies the blurb; a miss skips it.
+3. **Write** — a description lands as `<Family>.md`; when an art folder is given, a specimen lands as `<Family>.txt` holding only drawable characters.
 
-2.  **Stub Integration:** If a relevant stub file is found in the `stub_folder` (e.g., matching the font family name), its content will be used as a template or starting point for the description. The stub files (currently Markdown files in `font_copywriter/data/stubs/`) allow for pre-defined text or structure to be incorporated.
+## Develop
 
-3.  **Description Generation:** Based on the analyzed font data and any integrated stub content, a human-readable description is composed. This might involve:
-    *   Filling in placeholders in a template.
-    *   Programmatically generating sentences or paragraphs based on font characteristics.
-    *   Formatting the output (likely as Markdown).
-
-4.  **"Art" File Handling:** The `art_path` argument suggests functionality related to generating or managing associated visual materials. This could include:
-    *   Creating sample text renderings.
-    *   Generating waterfall specimens.
-    *   Listing key glyphs or character sets.
-    *   The exact nature of "art" files will be defined as the tool is developed.
-
-5.  **Output:** The generated description(s) will be saved to the location specified by `desc_path`. If multiple fonts are processed from a folder, it might create multiple description files or a single consolidated one.
-
-### Project Structure
-
-*   `font_copywriter/`: Main package directory.
-    *   `__init__.py`: Initializes the package and exports the version.
-    *   `__main__.py`: Provides the CLI entry point using `python-fire`.
-    *   `copywriter.py`: Contains the core `copywrite` function (currently a stub).
-    *   `data/stubs/`: Contains example stub files, primarily for Noto fonts. These seem to be Markdown files that can serve as templates.
-*   `requirements.txt`: Lists Python dependencies (currently empty, but will likely include font analysis tools).
-*   `setup.py`: Standard Python package setup file.
-*   `README.md`: This file.
-*   `LICENSE`: Apache 2.0 License.
-
-### Input and Output
-
-*   **Input:**
-    *   `font_path_or_folder (Path | str)`: Path to a font file (e.g., `.ttf`, `.otf`) or a directory containing font files.
-    *   `desc_path (Path | str)`: Output directory or file path for the generated descriptions.
-    *   `art_path (Path | str)`: Output directory or file path for "art" files.
-    *   `stub_folder (Path | str)`: Path to a directory containing stub/template files (e.g., `.md`).
-*   **Output:**
-    *   Human-readable font description files (likely Markdown).
-    *   Associated "art" files (format to be determined).
-
-### Coding Conventions
-
-While not explicitly stated, the project follows standard Python conventions (PEP 8). Key points for contributors:
-
-*   Use type hinting (`from typing import ...`).
-*   Write clear and concise code.
-*   Include docstrings for modules, classes, and functions.
-*   Ensure code is well-tested (though tests are not yet present).
-
-### Contributing
-
-Contributions to `font-copywriter` are welcome! As the project is in its early stages, there are many opportunities to help shape its development.
-
-1.  **Reporting Bugs:** If you find a bug, please open an issue on the GitHub repository. Include:
-    *   Steps to reproduce the bug.
-    *   Expected behavior.
-    *   Actual behavior.
-    *   Your environment (OS, Python version).
-
-2.  **Suggesting Enhancements:** Have an idea for a new feature or an improvement to an existing one? Open an issue to discuss it.
-
-3.  **Pull Requests:**
-    *   Fork the repository.
-    *   Create a new branch for your feature or bug fix: `git checkout -b feature/your-feature-name` or `git checkout -b fix/your-bug-fix`.
-    *   Make your changes.
-    *   Add tests for your changes.
-    *   Ensure your code lints and tests pass.
-    *   Commit your changes with a clear and descriptive commit message.
-    *   Push your branch to your fork: `git push origin feature/your-feature-name`.
-    *   Open a pull request against the `main` branch of the original repository.
-
-When contributing code, please ensure your changes align with the project's goals and coding conventions. If the `copywriter.py` function is implemented, ensure your contributions are compatible with its intended functionality.
-
-*(Note: As `CLAUDE.md` was mentioned in the prompt but is not present in the file listing, no specific instructions from it could be incorporated. If such a file exists or is created, its guidelines should be followed.)*
-
----
+```bash
+uv venv && uv pip install -e ".[dev,test]"
+uv run pytest                      # tests
+uv run ruff check .                # lint
+uv run mypy src/font_copywriter    # types
+```
 
 ## License
 
-`font-copywriter` is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for more details.
+Apache 2.0. See [LICENSE](LICENSE).
